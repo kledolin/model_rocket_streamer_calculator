@@ -1,4 +1,4 @@
-# Model Rocket Streamer Calculator by David Presker
+# Model Rocket Streamer Calculator by David Presker, https://github.com/kledolin/model_rocket_streamer_calculator
 
 import math
 import sys
