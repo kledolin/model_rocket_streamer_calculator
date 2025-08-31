@@ -2,7 +2,7 @@
 ===                       by David Presker                       ===
 === https://github.com/kledolin/model_rocket_streamer_calculator ===
 
-Project name: Arrow
+Project name: Zeta
 Required drag area: 35.50 in²
 Suggested streamer dimensions:
  - Width:  1.9 in (auto-calculated)
