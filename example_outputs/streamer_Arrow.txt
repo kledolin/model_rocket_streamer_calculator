@@ -1,0 +1,18 @@
+===              ✅ Results of Streamer Calculation              ===
+===                       by David Presker                       ===
+=== https://github.com/kledolin/model_rocket_streamer_calculator ===
+
+Project name: Arrow
+Required drag area: 35.50 in²
+Suggested streamer dimensions:
+ - Width:  1.9 in (auto-calculated)
+ - Length: 18.8 in
+ - Aspect ratio: 10.0:1
+
+--- Inputs ---
+Rocket mass: 0.8 oz
+Descent rate: 20.0 ft/s
+Air density: 0.00238 slugs/ft³
+Gravity: 32.17 ft/s²
+Drag coefficient: 0.4
+Used ratio: 10.0:1

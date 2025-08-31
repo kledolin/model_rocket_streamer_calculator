@@ -1,7 +1,6 @@
-# Model Rocket Streamer Calculator by David Presker, https://github.com/kledolin/model_rocket_streamer_calculator
-
 import math
 import sys
+import re
 
 # Custom Tee class to print and write to file
 class Tee:
@@ -27,83 +26,145 @@ class Tee:
         self.close()
 
 
-def compute_streamer_area(mass_grams, velocity, Cd, air_density, gravity):
-    mass = mass_grams / 1000  # grams to kg
-    area_m2 = (2 * mass * gravity) / (air_density * Cd * velocity**2)
-    area_cm2 = area_m2 * 10000
-    return area_m2, area_cm2
+def compute_streamer_area(mass_kg, velocity, Cd, air_density, gravity):
+    """
+    mass_kg: kg
+    velocity: m/s
+    air_density: kg/m³
+    gravity: m/s²
+    returns area in m²
+    """
+    area_m2 = (2 * mass_kg * gravity) / (air_density * Cd * velocity**2)
+    return area_m2
 
 
 def model_rocket_streamer_calculator():
-    print("=== Model Rocket Streamer Size Calculator ===")
-    print("===            by David Presker            ===\n")
+    print("===            Model Rocket Streamer Size Calculator             ===")
+    print("===                       by David Presker                       ===")
+    print("=== https://github.com/kledolin/model_rocket_streamer_calculator ===\n")
 
     try:
+        # --- Unit system selection ---
+        unit_system = input("Select unit system: metric (m) [default] or imperial (i): ").strip().lower()
+        if unit_system not in ["i", "imperial"]:
+            unit_system = "m"
+
         project_name = input("Project name (optional): ").strip()
 
-        mass_input = input("Rocket mass (grams) [Required]: ").strip()
-        if not mass_input:
-            print("❌ Error: Rocket mass is required.")
-            return
-        mass = float(mass_input)
+        # --- Input prompts ---
+        if unit_system == "m":
+            mass_unit = "grams"
+            velocity_unit = "m/s"
+            area_unit = "cm²"
+            width_unit = "cm"
+            length_unit = "cm"
+            default_velocity = 6.0
+            default_air_density = 1.225
+            default_gravity = 9.8067
 
-        velocity_input = input("Descent rate v (m/s) [Default: 6.0]: ").strip()
-        velocity = float(velocity_input) if velocity_input else 6.0
+            mass_input = float(input(f"Rocket mass ({mass_unit}) [Required]: ").strip())
+            mass_kg = mass_input / 1000  # g → kg
 
-        air_density_input = input("Air density ρ (kg/m³) [Default: 1.225]: ").strip()
-        air_density = float(air_density_input) if air_density_input else 1.225
+            velocity_input = input(f"Descent rate v ({velocity_unit}) [Default: {default_velocity}]: ").strip()
+            velocity = float(velocity_input) if velocity_input else default_velocity
 
-        Cd_input = input("Drag coefficient Cd (for streamers: 0.3<Cd<0.8) [Default: 0.4]: ").strip()
-        Cd = float(Cd_input) if Cd_input else 0.4
+            air_density_input = input(f"Air density ρ (kg/m³) [Default: {default_air_density}]: ").strip()
+            air_density = float(air_density_input) if air_density_input else default_air_density
 
-        gravity_input = input("Gravity g (m/s²) [Default: 9.8067]: ").strip()
-        gravity = float(gravity_input) if gravity_input else 9.8067
+            Cd_input = input("Drag coefficient Cd (for streamers: 0.3<Cd<0.8) [Default: 0.4]: ").strip()
+            Cd = float(Cd_input) if Cd_input else 0.4
 
-        # Compute required drag area
-        area_m2, area_cm2 = compute_streamer_area(mass, velocity, Cd, air_density, gravity)
+            gravity_input = input(f"Gravity g (m/s²) [Default: {default_gravity}]: ").strip()
+            gravity = float(gravity_input) if gravity_input else default_gravity
 
-        # Ask for width
-        width_input = input("Streamer width in cm (if width isn't provided, it is going to be auto calculated)(optional): ").strip()
+        else:
+            mass_unit = "oz"
+            velocity_unit = "ft/s"
+            area_unit = "in²"
+            width_unit = "in"
+            length_unit = "in"
+            default_velocity = 20.0  # ft/s
+            default_air_density = 1.225  # will be converted to slugs/ft³ for output
+            default_gravity = 32.174  # ft/s²
+
+            mass_input = float(input(f"Rocket mass ({mass_unit}) [Required]: ").strip())
+            mass_kg = mass_input * 0.0283495  # oz → kg
+
+            velocity_input = input(f"Descent rate v ({velocity_unit}) [Default: {default_velocity}]: ").strip()
+            velocity = (float(velocity_input) if velocity_input else default_velocity) * 0.3048  # ft/s → m/s
+
+            air_density_input = input(f"Air density ρ (kg/m³) [Default: {default_air_density}]: ").strip()
+            air_density = float(air_density_input) if air_density_input else default_air_density
+
+            Cd_input = input("Drag coefficient Cd (for streamers: 0.3<Cd<0.8) [Default: 0.4]: ").strip()
+            Cd = float(Cd_input) if Cd_input else 0.4
+
+            gravity_input = input(f"Gravity g (ft/s²) [Default: {default_gravity}]: ").strip()
+            gravity = 9.8067  # metric internally
+
+        # --- Compute area ---
+        area_m2 = compute_streamer_area(mass_kg, velocity, Cd, air_density, 9.8067)
+
+        # Convert area to display units
+        if unit_system == "m":
+            area_display = area_m2 * 10000  # m² → cm²
+        else:
+            area_display = area_m2 * 1550.0  # m² → in²
+
+        # --- Streamer dimensions ---
+        width_input = input(f"Streamer width in {width_unit} (optional): ").strip()
         if width_input:
-            width_cm = float(width_input)
-            length_cm = area_cm2 / width_cm  # compute required length
-            ratio_used = length_cm / width_cm
+            width = float(width_input)
+            length = area_display / width
+            ratio_used = length / width
             width_source = "manual"
         else:
-            # Ask for ratio only if width is not set
-            ratio_input = input("Length-to-width ratio (ratios between 5:1 and 10:1 are very effective) [Default: 10]: ").strip()
+            ratio_input = input("Length-to-width ratio (recommended 5:1 to 10:1) [Default: 10]: ").strip()
             ratio = float(ratio_input) if ratio_input else 10.0
-            width_cm = math.sqrt(area_cm2 / ratio)
-            length_cm = width_cm * ratio
+            width = math.sqrt(area_display / ratio)
+            length = width * ratio
             ratio_used = ratio
             width_source = "auto"
 
         # --- Output ---
-        with Tee("streamer.txt") as tee:
-            print("=== ✅ Results of Streamer Calculation, by David Presker ===\n", file=tee)
+        fname_safe = re.sub(r'[^\w\d-]', '_', project_name.strip()) if project_name.strip() else "streamer"
+        txt_filename = f"streamer_{fname_safe}.txt"
+
+        with Tee(txt_filename) as tee:
+            print("===              ✅ Results of Streamer Calculation              ===", file=tee)
+            print("===                       by David Presker                       ===", file=tee)
+            print("=== https://github.com/kledolin/model_rocket_streamer_calculator ===\n", file=tee)
             if project_name:
                 print(f"Project name: {project_name}", file=tee)
 
-            print(f"Required drag area: {area_cm2:.2f} cm²", file=tee)
+            print(f"Required drag area: {area_display:.2f} {area_unit}", file=tee)
             print(f"Suggested streamer dimensions:", file=tee)
-            print(f" - Width:  {width_cm:.1f} cm {'(user input)' if width_source == 'manual' else '(auto-calculated)'}", file=tee)
-            print(f" - Length: {length_cm:.1f} cm", file=tee)
-            print(f" - Aspect ratio: {ratio_used:.1f} : 1", file=tee)
+            print(f" - Width:  {width:.1f} {width_unit} {'(user input)' if width_source=='manual' else '(auto-calculated)'}", file=tee)
+            print(f" - Length: {length:.1f} {length_unit}", file=tee)
+            print(f" - Aspect ratio: {ratio_used:.1f}:1", file=tee)
 
             print("\n--- Inputs ---", file=tee)
-            print(f"Rocket mass: {mass:.1f} g", file=tee)
-            print(f"Descent rate: {velocity} m/s", file=tee)
-            print(f"Air density: {air_density} kg/m³", file=tee)
+            if unit_system == "m":
+                print(f"Rocket mass: {mass_input:.1f} g", file=tee)
+                print(f"Descent rate: {velocity:.1f} m/s", file=tee)
+                print(f"Air density: {air_density:.3f} kg/m³", file=tee)
+                print(f"Gravity: 9.81 m/s²", file=tee)
+            else:
+                print(f"Rocket mass: {mass_input:.1f} oz", file=tee)
+                print(f"Descent rate: {(velocity/0.3048):.1f} ft/s", file=tee)
+                air_density_imperial = air_density * 0.00194032  # kg/m³ → slugs/ft³
+                print(f"Air density: {air_density_imperial:.5f} slugs/ft³", file=tee)
+                print(f"Gravity: 32.17 ft/s²", file=tee)
+
             print(f"Drag coefficient: {Cd}", file=tee)
-            print(f"Gravity: {gravity} m/s²", file=tee)
             if width_source == "manual":
                 print("⚠️  Ratio was calculated because width was manually provided", file=tee)
             else:
-                print(f"Used ratio: {ratio:.1f} : 1", file=tee)
+                print(f"Used ratio: {ratio:.1f}:1", file=tee)
 
             tee.flush()
 
-        print("✅ Results also saved to 'streamer.txt'")
+        print(f"✅ Results also saved to '{txt_filename}'")
 
     except ValueError:
         print("❌ Invalid input. Please enter valid numbers.")

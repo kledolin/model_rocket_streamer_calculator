@@ -1,0 +1,18 @@
+===              ✅ Results of Streamer Calculation              ===
+===                       by David Presker                       ===
+=== https://github.com/kledolin/model_rocket_streamer_calculator ===
+
+Project name: Ultima
+Required drag area: 261.29 cm²
+Suggested streamer dimensions:
+ - Width:  5.0 cm (user input)
+ - Length: 52.3 cm
+ - Aspect ratio: 10.5:1
+
+--- Inputs ---
+Rocket mass: 23.5 g
+Descent rate: 6.0 m/s
+Air density: 1.225 kg/m³
+Gravity: 9.81 m/s²
+Drag coefficient: 0.4
+⚠️  Ratio was calculated because width was manually provided
