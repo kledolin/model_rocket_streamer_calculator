@@ -1,3 +1,6 @@
+# A model rocket streamer calculation program
+# By David Presker
+
 import math
 import sys
 import re
